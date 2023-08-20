@@ -53,7 +53,7 @@ class AC_DATABASE_API SQLQueryHolderTask : public SQLOperation
 {
 public:
     explicit SQLQueryHolderTask(std::shared_ptr<SQLQueryHolderBase> holder)
-        : m_holder(std::move(holder)) { }
+        : m_holder(holder) { }
 
     ~SQLQueryHolderTask();
 
@@ -68,8 +68,8 @@ private:
 class AC_DATABASE_API SQLQueryHolderCallback
 {
 public:
-    SQLQueryHolderCallback(std::shared_ptr<SQLQueryHolderBase>&& holder, QueryResultHolderFuture&& future)
-        : m_holder(std::move(holder)), m_future(std::move(future)) { }
+    SQLQueryHolderCallback(std::shared_ptr<SQLQueryHolderBase> holder, QueryResultHolderFuture&& future)
+        : m_holder(holder), m_future(std::move(future)) { }
 
     SQLQueryHolderCallback(SQLQueryHolderCallback&&) = default;
     SQLQueryHolderCallback& operator=(SQLQueryHolderCallback&&) = default;
