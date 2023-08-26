@@ -32,6 +32,12 @@ public:
     PreparedQueryResult GetPreparedResult(size_t index) const;
     void SetPreparedResult(size_t index, PreparedResultSet* result);
 
+    SQLQueryHolderBase(SQLQueryHolderBase&&);
+    SQLQueryHolderBase& operator=(SQLQueryHolderBase&&);
+
+    SQLQueryHolderBase(SQLQueryHolderBase const& right);
+    SQLQueryHolderBase& operator=(SQLQueryHolderBase const& right);
+
 protected:
     bool SetPreparedQueryImpl(size_t index, PreparedStatementBase* stmt);
 
