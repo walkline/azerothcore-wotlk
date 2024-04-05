@@ -33,6 +33,44 @@ BattlefieldWG::~BattlefieldWG()
 {
     for (Workshop::const_iterator itr = WorkshopsList.begin(); itr != WorkshopsList.end(); ++itr)
         delete *itr;
+}
+
+void BattlefieldWG::CleanupBeforeDelete()
+{
+    for (GuidUnorderedSet::const_iterator itr = KeepCreature[TEAM_HORDE].begin(); itr != KeepCreature[TEAM_HORDE].end(); ++itr)
+        if (Creature* creature = GetCreature(*itr))
+        {
+            creature->CleanupsBeforeDelete();
+            delete creature;
+        }
+
+    for (GuidUnorderedSet::const_iterator itr = KeepCreature[TEAM_ALLIANCE].begin(); itr != KeepCreature[TEAM_ALLIANCE].end(); ++itr)
+        if (Creature* creature = GetCreature(*itr))
+        {
+            creature->CleanupsBeforeDelete();
+            delete creature;
+        }
+
+    for (GuidUnorderedSet::const_iterator itr = OutsideCreature[TEAM_HORDE].begin(); itr != OutsideCreature[TEAM_HORDE].end(); ++itr)
+        if (Creature* creature = GetCreature(*itr))
+        {
+            creature->CleanupsBeforeDelete();
+            delete creature;
+        }
+
+    for (GuidUnorderedSet::const_iterator itr = OutsideCreature[TEAM_ALLIANCE].begin(); itr != OutsideCreature[TEAM_ALLIANCE].end(); ++itr)
+        if (Creature* creature = GetCreature(*itr))
+        {
+            creature->CleanupsBeforeDelete();
+            delete creature;
+        }
+
+    for (GuidUnorderedSet::const_iterator itr = CanonList.begin(); itr != CanonList.end(); ++itr)
+        if (Creature* creature = GetCreature(*itr))
+        {
+            creature->CleanupsBeforeDelete();
+            delete creature;
+        }
 
     for (GameObjectBuilding::const_iterator itr = BuildingsInZone.begin(); itr != BuildingsInZone.end(); ++itr)
         delete *itr;

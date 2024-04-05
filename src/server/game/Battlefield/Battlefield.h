@@ -57,10 +57,11 @@ enum BattlefieldSounds
 
 constexpr auto BATTLEFIELD_OBJECTIVE_UPDATE_INTERVAL = 1000;
 
-const uint32 BattlefieldFactions[PVP_TEAMS_COUNT] =
+const uint32 BattlefieldFactions[PVP_TEAMS_COUNT+1] =
 {
     1732, // Alliance
-    1735  // Horde
+    1735, // Horde
+    7     // Neutral
 };
 
 // some class predefs
@@ -217,6 +218,9 @@ public:
 
     /// Call this to init the Battlefield
     virtual bool SetupBattlefield() { return true; }
+
+    /// Cleans battlefield before deletion
+    virtual void CleanupBeforeDelete() { }
 
     /// Update data of a worldstate to all players present in zone
     void SendUpdateWorldState(uint32 field, uint32 value);

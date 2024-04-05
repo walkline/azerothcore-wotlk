@@ -231,7 +231,7 @@ T Field::GetData() const
 
         if (!tableName.empty() && tableName.size() > 4)
         {
-            auto signedResult = Acore::StringTo<int32>(data.value);
+            auto signedResult = Acore::StringTo<int32>(std::string_view(data.value, data.length));
 
             if (signedResult && !result && tableName.substr(tableName.length() - 4) == "_dbc")
             {

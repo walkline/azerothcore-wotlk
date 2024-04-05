@@ -76,6 +76,12 @@ void BattlefieldMgr::InitBattlefield()
        } */
 }
 
+void BattlefieldMgr::CleanupBattlefield()
+{
+    for (BattlefieldSet::iterator itr = m_BattlefieldSet.begin(); itr != m_BattlefieldSet.end(); ++itr)
+        (*itr)->CleanupBeforeDelete();
+}
+
 void BattlefieldMgr::AddZone(uint32 zoneid, Battlefield* handle)
 {
     m_BattlefieldMap[zoneid] = handle;

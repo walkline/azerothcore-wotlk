@@ -39,6 +39,10 @@ public:
 
     // create battlefield events
     void InitBattlefield();
+
+    // cleans battlefields before deletion
+    void CleanupBattlefield();
+
     // called when a player enters an battlefield area
     void HandlePlayerEnterZone(Player* player, uint32 areaflag);
     // called when player leaves an battlefield area

@@ -386,6 +386,9 @@ public:
      */
     bool SetupBattlefield() override;
 
+    /// Cleans battlefield before deletion
+    void CleanupBeforeDelete() override;
+
     /// Return pointer to relic object
     GameObject* GetRelic() { return GetGameObject(m_titansRelic); }
 

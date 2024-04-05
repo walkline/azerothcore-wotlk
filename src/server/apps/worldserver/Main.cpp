@@ -25,6 +25,7 @@
 #include "AsyncAuctionListing.h"
 #include "Banner.h"
 #include "BattlegroundMgr.h"
+#include "BattlefieldMgr.h"
 #include "BigNumber.h"
 #include "CliRunnable.h"
 #include "Common.h"
@@ -311,6 +312,7 @@ int main(int argc, char** argv)
     {
         // unload battleground templates before different singletons destroyed
         sBattlegroundMgr->DeleteAllBattlegrounds();
+        sBattlefieldMgr->CleanupBattlefield();
 
         sOutdoorPvPMgr->Die();                     // unload it before MapMgr
         sMapMgr->UnloadAll();                      // unload all grids (including locked in memory)
