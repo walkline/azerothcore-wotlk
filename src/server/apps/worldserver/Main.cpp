@@ -59,6 +59,23 @@
 #include <openssl/crypto.h>
 #include <openssl/opensslv.h>
 
+// TODO: delete me
+// This is used to detect huge memory allocations that seem to occur from time to time.
+// If such an allocation is detected, the program will crash.
+// Hopefully, GDB will provide a useful stack trace showing where these allocations happen.
+void* operator new(std::size_t size) {
+    // > 1 GB
+    if (size > 1 * 1024 * 1024 * 1024) {
+        std::cerr << "Huge allocation detected: " << size << " bytes\n";
+        std::abort();
+    }
+    return std::malloc(size);
+}
+
+void operator delete(void* ptr) noexcept {
+    std::free(ptr);
+}
+
 #if AC_PLATFORM == AC_PLATFORM_WINDOWS
 #include "ServiceWin32.h"
 char serviceName[] = "worldserver";
