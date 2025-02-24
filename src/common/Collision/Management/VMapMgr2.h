@@ -94,6 +94,7 @@ namespace VMAP
     public:
         // public for debug
         [[nodiscard]] G3D::Vector3 convertPositionToInternalRep(float x, float y, float z) const;
+        [[nodiscard]] G3D::Vector3 convertPositionFromInternalRep(float x, float y, float z) const;
         static std::string getMapFileName(unsigned int mapId);
 
         VMapMgr2();
@@ -112,6 +113,7 @@ namespace VMAP
         */
         bool GetObjectHitPos(unsigned int mapId, float x1, float y1, float z1, float x2, float y2, float z2, float& rx, float& ry, float& rz, float modifyDist) override;
         float getHeight(unsigned int mapId, float x, float y, float z, float maxSearchDist) override;
+        G3D::Vector3 getSafeGround(unsigned int mapId, float x, float y, float z, float collisionRadius, float maxSearchDist) override;
 
         bool processCommand(char* /*command*/) override { return false; } // for debug and extensions
 

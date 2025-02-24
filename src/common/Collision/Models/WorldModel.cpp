@@ -19,6 +19,7 @@
 #include "MapTree.h"
 #include "ModelIgnoreFlags.h"
 #include "ModelInstance.h"
+#include "SpherePlacementCalculations.h"
 #include "VMapDefinitions.h"
 
 using G3D::Vector3;
@@ -421,8 +422,46 @@ namespace VMAP
         {
             result = WmoLiquid::readFromFile(rf, iLiquid);
         }
+
+        buildTrianglesAdjacency(triangles);
+
         return result;
     }
+
+    struct GModelRayWithSpherePlacementCallback
+    {
+        GModelRayWithSpherePlacementCallback(const std::vector<MeshTriangle>& tris, const std::vector<Vector3>& vert, float sphereRadius, const GroupModel* model, std::unordered_set<Triangle, TriangleHasher>* trianglesInSphere):
+            vertices(vert.begin()), triangles(tris.begin()), sphereRadius(sphereRadius), model(model), trianglesInSphere(trianglesInSphere), hit(false) { }
+
+        bool operator()(const G3D::Ray& ray, uint32 entry, float& distance, bool /*StopAtFirstHit*/)
+        {
+            auto triangle = triangles[entry];
+            bool result = IntersectTriangle(triangle, vertices, ray, distance);
+            if (result) {
+                hit = true;
+            }
+
+            if (result || isTriangleInsideOrIntersectingSphere(vertices[triangle.idx0], vertices[triangle.idx1], vertices[triangle.idx2], ray.origin(), sphereRadius*sphereRadius))
+            {
+                auto res = model->FindTrianglesInSphere(entry, ray.origin(), sphereRadius);
+                if (result && res.empty())
+                    res = {entry};
+
+                for (auto &t : res) {
+                    triangle = triangles[t];
+                    trianglesInSphere->insert(Triangle(vertices[triangle.idx0], vertices[triangle.idx1], vertices[triangle.idx2]));
+                }
+            }
+
+            return hit;
+        }
+        std::vector<Vector3>::const_iterator vertices;
+        std::vector<MeshTriangle>::const_iterator triangles;
+        std::unordered_set<Triangle, TriangleHasher>* trianglesInSphere;
+        const GroupModel* model;
+        bool hit;
+        float sphereRadius;
+    };
 
     struct GModelRayCallback
     {
@@ -447,6 +486,16 @@ namespace VMAP
         }
 
         GModelRayCallback callback(triangles, vertices);
+        meshTree.intersectRay(ray, callback, distance, stopAtFirstHit);
+        return callback.hit;
+    }
+
+    bool GroupModel::IntersectRayWithSpherePlacement(const G3D::Ray& ray, float sphereRadius, float& distance, bool stopAtFirstHit, std::unordered_set<Triangle, TriangleHasher>* trianglesInSphere) const
+    {
+        if (triangles.empty())
+            return false;
+
+        GModelRayWithSpherePlacementCallback callback(triangles, vertices,  sphereRadius, this, trianglesInSphere);
         meshTree.intersectRay(ray, callback, distance, stopAtFirstHit);
         return callback.hit;
     }
@@ -493,6 +542,87 @@ namespace VMAP
         liquid = iLiquid;
     }
 
+    std::vector<uint32> GroupModel::FindTrianglesInSphere(uint32 startTriangle, const G3D::Vector3& sphereCenter, float sphereRadius) const
+    {
+        std::unordered_set<uint32> visited;
+        std::queue<uint32> toVisit;
+        std::vector<uint32> result;
+
+        toVisit.push(startTriangle);
+        visited.insert(startTriangle);
+
+        float sphereRadiusSq = sphereRadius * sphereRadius; // Avoid computing sqrt
+
+        while (!toVisit.empty())
+        {
+            uint32 current = toVisit.front();
+            toVisit.pop();
+
+            // Get current triangle vertices
+            const MeshTriangle& t = triangles[current];
+            G3D::Vector3 v0 = vertices[t.idx0];
+            G3D::Vector3 v1 = vertices[t.idx1];
+            G3D::Vector3 v2 = vertices[t.idx2];
+
+            // Check if triangle is inside or intersects the sphere
+            if (isTriangleInsideOrIntersectingSphere(v0, v1, v2, sphereCenter, sphereRadiusSq))
+            {
+                result.push_back(current);
+
+                // Add neighbors only if they intersect the sphere
+                std::pair<uint32, uint32> edges[3] = {
+                    {std::min(t.idx0, t.idx1), std::max(t.idx0, t.idx1)},
+                    {std::min(t.idx1, t.idx2), std::max(t.idx1, t.idx2)},
+                    {std::min(t.idx2, t.idx0), std::max(t.idx2, t.idx0)}
+                };
+
+                for (auto& edge : edges)
+                {
+                    auto it = edgeToTriangle.find(edge);
+                    if (it != edgeToTriangle.end())
+                    {
+                        for (uint32 neighbor : it->second)
+                        {
+                            if (visited.find(neighbor) == visited.end())
+                            {
+                                const MeshTriangle& nt = triangles[neighbor];
+
+                                G3D::Vector3 nv0 = vertices[nt.idx0];
+                                G3D::Vector3 nv1 = vertices[nt.idx1];
+                                G3D::Vector3 nv2 = vertices[nt.idx2];
+
+                                if (isTriangleInsideOrIntersectingSphere(nv0, nv1, nv2, sphereCenter, sphereRadiusSq))
+                                {
+                                    visited.insert(neighbor);
+                                    toVisit.push(neighbor);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    void GroupModel::buildTrianglesAdjacency(const std::vector<MeshTriangle>& triangles)
+    {
+        for (uint32 i = 0; i < triangles.size(); ++i)
+        {
+            const MeshTriangle& t = triangles[i];
+
+            std::pair<uint32, uint32> edges[3] = {
+                {std::min(t.idx0, t.idx1), std::max(t.idx0, t.idx1)},
+                {std::min(t.idx1, t.idx2), std::max(t.idx1, t.idx2)},
+                {std::min(t.idx2, t.idx0), std::max(t.idx2, t.idx0)}
+            };
+
+            for (auto& edge : edges)
+                edgeToTriangle[edge].push_back(i);
+        }
+    }
+
     // ===================== WorldModel ==================================
 
     void WorldModel::setGroupModels(std::vector<GroupModel>& models)
@@ -511,6 +641,21 @@ namespace VMAP
             return hit;
         }
         std::vector<GroupModel>::const_iterator models;
+        bool hit;
+    };
+
+    struct WModelRayWithSpherePlacementCallBack
+    {
+        WModelRayWithSpherePlacementCallBack(const std::vector<GroupModel>& mod, float sphereRadius, std::unordered_set<Triangle, TriangleHasher>* trianglesInSphere): models(mod.begin()), sphereRadius(sphereRadius), trianglesInSphere(trianglesInSphere), hit(false) { }
+        bool operator()(const G3D::Ray& ray, uint32 entry, float& distance, bool StopAtFirstHit)
+        {
+            bool result = models[entry].IntersectRayWithSpherePlacement(ray, sphereRadius, distance, StopAtFirstHit, trianglesInSphere);
+            if (result) { hit = true; }
+            return hit;
+        }
+        std::unordered_set<Triangle, TriangleHasher>* trianglesInSphere;
+        std::vector<GroupModel>::const_iterator models;
+        float sphereRadius;
         bool hit;
     };
 
@@ -534,6 +679,30 @@ namespace VMAP
         }
 
         WModelRayCallBack isc(groupModels);
+        groupTree.intersectRay(ray, isc, distance, stopAtFirstHit);
+        return isc.hit;
+    }
+
+    bool WorldModel::IntersectRayWithSpherePlacement(const G3D::Ray& ray, float sphereRadius, float& distance, bool stopAtFirstHit, ModelIgnoreFlags ignoreFlags, std::unordered_set<Triangle, TriangleHasher>* trianglesInSphere) const
+    {
+        // If the caller asked us to ignore certain objects we should check flags
+        if ((ignoreFlags & ModelIgnoreFlags::M2) != ModelIgnoreFlags::Nothing)
+        {
+            // M2 models are not taken into account for LoS calculation if caller requested their ignoring.
+            if (Flags & MOD_M2)
+            {
+                return false;
+            }
+        }
+
+        // small M2 workaround, maybe better make separate class with virtual intersection funcs
+        // in any case, there's no need to use a bound tree if we only have one submodel
+        if (groupModels.size() == 1)
+        {
+            return groupModels[0].IntersectRayWithSpherePlacement(ray, sphereRadius, distance, stopAtFirstHit, trianglesInSphere);
+        }
+
+        WModelRayWithSpherePlacementCallBack isc(groupModels, sphereRadius, trianglesInSphere);
         groupTree.intersectRay(ray, isc, distance, stopAtFirstHit);
         return isc.hit;
     }

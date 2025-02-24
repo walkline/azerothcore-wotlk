@@ -73,6 +73,18 @@ namespace VMAP
         return pos;
     }
 
+    Vector3 VMapMgr2::convertPositionFromInternalRep(float x, float y, float z) const
+    {
+        Vector3 pos;
+        const float mid = 0.5f * MAX_NUMBER_OF_GRIDS * SIZE_OF_GRIDS;
+        pos.x = mid - x;
+        pos.y = mid - y;
+        pos.z = z;
+
+        return pos;
+    }
+
+
     InstanceTreeMap::const_iterator VMapMgr2::GetMapTree(uint32 mapId) const
     {
         // return the iterator if found or end() if not found/NULL
@@ -251,6 +263,25 @@ namespace VMAP
         }
 
         return VMAP_INVALID_HEIGHT_VALUE;
+    }
+
+    Vector3 VMapMgr2::getSafeGround(unsigned int mapId, float x, float y, float z, float collisionRadius, float maxSearchDist)
+    {
+#if defined(ENABLE_VMAP_CHECKS)
+        if (isHeightCalcEnabled() && !IsVMAPDisabledForPtr(mapId, VMAP_DISABLE_HEIGHT))
+#endif
+        {
+            InstanceTreeMap::const_iterator instanceTree = GetMapTree(mapId);
+            if (instanceTree != iInstanceMapTrees.end())
+            {
+                Vector3 pos = convertPositionToInternalRep(x, y, z);
+                auto accuratePos = instanceTree->second->getSafeGroundByPlacingSpere(pos, collisionRadius, maxSearchDist);
+                accuratePos.z -= collisionRadius;
+                return convertPositionFromInternalRep(accuratePos.x, accuratePos.y, accuratePos.z);
+            }
+        }
+
+        return Vector3(x, y, z);
     }
 
     bool VMapMgr2::GetAreaInfo(uint32 mapId, float x, float y, float& z, uint32& flags, int32& adtId, int32& rootId, int32& groupId) const

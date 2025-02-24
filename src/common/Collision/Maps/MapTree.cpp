@@ -26,6 +26,7 @@
 #include <limits>
 #include <sstream>
 #include <string>
+#include "SpherePlacementCalculations.h"
 
 using G3D::Vector3;
 
@@ -48,6 +49,48 @@ namespace VMAP
     protected:
         ModelInstance* prims;
         ModelIgnoreFlags flags;
+        bool hit;
+    };
+
+    class MapRayWithSpherePlacementCallback
+    {
+    public:
+        MapRayWithSpherePlacementCallback(ModelInstance* val, float sphereRadius, ModelIgnoreFlags ignoreFlags): prims(val), sphereRadius(sphereRadius), flags(ignoreFlags), hit(false) { }
+        bool operator()(const G3D::Ray& ray, uint32 entry, float& distance, bool StopAtFirstHit)
+        {
+            std::unordered_set<Triangle, TriangleHasher> preTransformedTriangles;
+            ModelInstance& inst = prims[entry];
+            bool result = inst.intersectRayWithSpherePlacement(ray, sphereRadius, distance, StopAtFirstHit, flags, &preTransformedTriangles);
+            if (result)
+            {
+                hit = true;
+            }
+
+            G3D::Matrix3 rotMatrix = G3D::Matrix3::fromEulerAnglesZYX(
+                G3D::pi() * inst.iRot.y / 180.f,
+                G3D::pi() * inst.iRot.x / 180.f,
+                G3D::pi() * inst.iRot.z / 180.f
+            );
+
+            for (const auto& tri : preTransformedTriangles) {
+                trianglesInSphere.insert(Triangle(
+                    (rotMatrix * (tri.a * inst.iScale)) + inst.iPos,
+                    (rotMatrix * (tri.b * inst.iScale)) + inst.iPos,
+                    (rotMatrix * (tri.c * inst.iScale)) + inst.iPos
+                ));
+            }
+
+            return result;
+        }
+        bool didHit() { return hit; }
+
+        std::unordered_set<Triangle, TriangleHasher> getTriangles() { return trianglesInSphere; }
+
+    protected:
+        std::unordered_set<Triangle, TriangleHasher> trianglesInSphere;
+        ModelInstance* prims;
+        ModelIgnoreFlags flags;
+        float sphereRadius;
         bool hit;
     };
 
@@ -155,7 +198,77 @@ namespace VMAP
         }
         return intersectionCallBack.didHit();
     }
+
     //=========================================================
+
+    bool PointAboveTriangle(const G3D::Point3& point, const Triangle& tri) {
+        G3D::Point3 closestPoint = closestPointOnTriangle(point, tri);
+        return point.z >= closestPoint.z;
+    }
+
+    Vector3 StaticMapTree::GetSafeGroundByPlacingSphere(const G3D::Ray& pRay, float collisionRadius, float pMaxDist) const
+    {
+        G3D::Ray adjustedRay = pRay;
+        G3D::Point3 newRayPos = adjustedRay.origin();
+        newRayPos.z += collisionRadius/2;
+        adjustedRay.set(newRayPos, adjustedRay.direction());
+
+        MapRayWithSpherePlacementCallback intersectionCallBack(iTreeValues, collisionRadius, ModelIgnoreFlags::Nothing);
+        iTree.intersectRay(adjustedRay, intersectionCallBack, pMaxDist, false);
+
+        // In rare cases, a single ray cast is not enough.
+        // Let's ensure that there is a surface (triangle) beneath all four edges of the sphere.
+        // If not, we cast a ray downward from that edge.
+        std::unordered_set<Triangle, TriangleHasher> triangleSet(intersectionCallBack.getTriangles().begin(), intersectionCallBack.getTriangles().end());
+        // Define edge points around the sphere's bottom
+        std::vector<G3D::Point3> edgePoints = {
+            {newRayPos.x + collisionRadius, newRayPos.y, newRayPos.z},
+            {newRayPos.x - collisionRadius, newRayPos.y, newRayPos.z},
+            {newRayPos.x, newRayPos.y + collisionRadius, newRayPos.z},
+            {newRayPos.x, newRayPos.y - collisionRadius, newRayPos.z}
+        };
+
+        for (const auto& edge : edgePoints) {
+            bool edgeHasTriangle = false;
+
+            for (const auto& tri : triangleSet) {
+                if (PointAboveTriangle(edge, tri)) {
+                    edgeHasTriangle = true;
+                    break;
+                }
+            }
+
+            if (!edgeHasTriangle) {
+                // Cast a ray downward from the missing edge
+                G3D::Ray edgeRay(edge, G3D::Vector3(0, 0, -1));
+                MapRayWithSpherePlacementCallback edgeIntersectionCallBack(iTreeValues, collisionRadius, ModelIgnoreFlags::Nothing);
+                iTree.intersectRay(edgeRay, edgeIntersectionCallBack, pMaxDist, false);
+
+                // Add new triangles to the set
+                triangleSet.insert(edgeIntersectionCallBack.getTriangles().begin(), edgeIntersectionCallBack.getTriangles().end());
+            }
+        }
+
+        // Debugging code:
+        // for (auto &t: triangleSet)
+        //     printf("[(%f, %f, %f), (%f, %f, %f), (%f, %f, %f)],\n",
+        //         t.a.x, t.a.y, t.a.z,
+        //         t.b.x, t.b.y, t.b.z,
+        //         t.c.x, t.c.y, t.c.z);
+        //
+        // printf("Ray starting point: %f, %f, %f\n",
+        //     pRay.origin().x, pRay.origin().y, pRay.origin().z);
+
+        auto t = pRay.origin();
+        t.z += collisionRadius;
+        auto res = resolveCollisionWithSphere(t, collisionRadius, triangleSet);
+
+        // Debugging code:
+        // printf("Res: %f, %f, %f\n",
+        //     res.x, res.y, res.z);
+
+        return res;
+    }
 
     bool StaticMapTree::isInLineOfSight(const Vector3& pos1, const Vector3& pos2, ModelIgnoreFlags ignoreFlags) const
     {
@@ -240,6 +353,13 @@ namespace VMAP
             height = pPos.z - maxDist;
         }
         return (height);
+    }
+
+    Vector3 StaticMapTree::getSafeGroundByPlacingSpere(const Vector3& pPos, float collisionRadius, float maxSearchDist) const
+    {
+        Vector3 dir = Vector3(0, 0, -1);
+        G3D::Ray ray(pPos, dir);   // direction with length of 1
+        return GetSafeGroundByPlacingSphere(ray, collisionRadius, maxSearchDist);
     }
 
     //=========================================================

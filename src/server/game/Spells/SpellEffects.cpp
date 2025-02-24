@@ -4975,7 +4975,8 @@ void Spell::EffectChargeDest(SpellEffIndex /*effIndex*/)
             pos = m_caster->GetFirstCollisionPosition(dist, angle);
         }
 
-        m_caster->GetMotionMaster()->MoveCharge(pos.m_positionX, pos.m_positionY, pos.m_positionZ);
+        auto safePos = m_caster->GetMap()->GetSafeGroundPos(pos.m_positionX, pos.m_positionY, pos.m_positionZ, m_caster->GetGroundCollisionTestingRadius());
+        m_caster->GetMotionMaster()->MoveCharge(safePos.x, safePos.y, safePos.z);
 
         if (m_caster->IsPlayer())
         {

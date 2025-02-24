@@ -63,6 +63,26 @@ namespace VMAP
         return hit;
     }
 
+    bool ModelInstance::intersectRayWithSpherePlacement(const G3D::Ray& pRay, float sphereRadius, float& pMaxDist, bool StopAtFirstHit, ModelIgnoreFlags ignoreFlags, std::unordered_set<Triangle, TriangleHasher>* trianglesInSphere) const
+    {
+        if (!iModel)
+            return false;
+        float time = pRay.intersectionTime(iBound);
+        if (time == G3D::inf())
+            return false;
+
+        Vector3 p = iInvRot * (pRay.origin() - iPos) * iInvScale;
+        Ray modRay(p, iInvRot * pRay.direction());
+        float distance = pMaxDist * iInvScale;
+        bool hit = iModel->IntersectRayWithSpherePlacement(modRay, sphereRadius * iInvScale, distance, StopAtFirstHit, ignoreFlags, trianglesInSphere);
+        if (hit)
+        {
+            distance *= iScale;
+            pMaxDist = distance;
+        }
+        return hit;
+    }
+
     void ModelInstance::intersectPoint(const G3D::Vector3& p, AreaInfo& info) const
     {
         if (!iModel)

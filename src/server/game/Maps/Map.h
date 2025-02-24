@@ -394,6 +394,10 @@ public:
     [[nodiscard]] float GetMinHeight(float x, float y) const;
     Transport* GetTransportForPos(uint32 phase, float x, float y, float z, WorldObject* worldobject = nullptr);
 
+    // Attempts to position a sphere while considering surrounding collisions.
+    // Currently, only works with vmaps, otherwise, the original position is returned.
+    [[nodiscard]] G3D::Vector3 GetSafeGroundPos(float x, float y, float z, float collisionRadius, float maxSearchDist = DEFAULT_HEIGHT_SEARCH) const;
+
     void GetFullTerrainStatusForPosition(uint32 phaseMask, float x, float y, float z, float collisionHeight, PositionFullTerrainStatus& data, uint8 reqLiquidType = MAP_ALL_LIQUIDS);
     LiquidData const GetLiquidData(uint32 phaseMask, float x, float y, float z, float collisionHeight, uint8 ReqLiquidType);
 

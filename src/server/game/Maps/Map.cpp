@@ -2077,6 +2077,12 @@ float Map::GetHeight(float x, float y, float z, bool checkVMap /*= true*/, float
     return mapHeight;                               // explicitly use map data
 }
 
+G3D::Vector3 Map::GetSafeGroundPos(float x, float y, float z, float collisionRadius, float maxSearchDist) const
+{
+    VMAP::IVMapMgr* vmgr = VMAP::VMapFactory::createOrGetVMapMgr();
+    return vmgr->getSafeGround(GetId(), x, y, z, collisionRadius, maxSearchDist);
+}
+
 float Map::GetGridHeight(float x, float y) const
 {
     if (GridMap* gmap = const_cast<Map*>(this)->GetGrid(x, y))

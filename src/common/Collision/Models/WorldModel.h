@@ -23,6 +23,8 @@
 #include <G3D/AABox.h>
 #include <G3D/Ray.h>
 #include <G3D/Vector3.h>
+#include <unordered_set>
+#include "Triangle.h"
 
 namespace VMAP
 {
@@ -81,6 +83,7 @@ namespace VMAP
         void setMeshData(std::vector<G3D::Vector3>& vert, std::vector<MeshTriangle>& tri);
         void setLiquidData(WmoLiquid*& liquid) { iLiquid = liquid; liquid = nullptr; }
         bool IntersectRay(const G3D::Ray& ray, float& distance, bool stopAtFirstHit) const;
+        bool IntersectRayWithSpherePlacement(const G3D::Ray& ray, float sphereRadius, float& distance, bool stopAtFirstHit, std::unordered_set<Triangle, TriangleHasher>* trianglesInSphere) const;
         bool IsInsideObject(const G3D::Vector3& pos, const G3D::Vector3& down, float& z_dist) const;
         bool GetLiquidLevel(const G3D::Vector3& pos, float& liqHeight) const;
         [[nodiscard]] uint32 GetLiquidType() const;
@@ -90,7 +93,19 @@ namespace VMAP
         [[nodiscard]] uint32 GetMogpFlags() const { return iMogpFlags; }
         [[nodiscard]] uint32 GetWmoID() const { return iGroupWMOID; }
         void GetMeshData(std::vector<G3D::Vector3>& outVertices, std::vector<MeshTriangle>& outTriangles, WmoLiquid*& liquid);
+        std::vector<uint32> FindTrianglesInSphere(uint32 startTriangle, const G3D::Vector3& sphereCenter, float sphereRadius) const;
     protected:
+        struct PairHash
+        {
+            std::size_t operator()(const std::pair<uint32, uint32>& p) const {
+                return std::hash<uint32>{}(p.first) ^ (std::hash<uint32>{}(p.second) << 1);
+            }
+        };
+
+        void buildTrianglesAdjacency(const std::vector<MeshTriangle>& triangles);
+
+        std::unordered_map<std::pair<uint32, uint32>, std::vector<uint32>, PairHash> edgeToTriangle;
+
         G3D::AABox iBound;
         uint32 iMogpFlags{0};// 0x8 outdor; 0x2000 indoor
         uint32 iGroupWMOID{0};
@@ -109,6 +124,7 @@ namespace VMAP
         void setGroupModels(std::vector<GroupModel>& models);
         void setRootWmoID(uint32 id) { RootWMOID = id; }
         bool IntersectRay(const G3D::Ray& ray, float& distance, bool stopAtFirstHit, ModelIgnoreFlags ignoreFlags) const;
+        bool IntersectRayWithSpherePlacement(const G3D::Ray& ray, float sphereRadius, float& distance, bool stopAtFirstHit, ModelIgnoreFlags ignoreFlags, std::unordered_set<Triangle, TriangleHasher>* trianglesInSphere) const;
         bool IntersectPoint(const G3D::Vector3& p, const G3D::Vector3& down, float& dist, AreaInfo& info) const;
         bool GetLocationInfo(const G3D::Vector3& p, const G3D::Vector3& down, float& dist, LocationInfo& info) const;
         bool writeFile(const std::string& filename);

@@ -620,6 +620,7 @@ public:
     [[nodiscard]] virtual float GetCollisionHeight() const { return 0.0f; }
     [[nodiscard]] virtual float GetCollisionWidth() const { return GetObjectSize(); }
     [[nodiscard]] virtual float GetCollisionRadius() const { return GetObjectSize() / 2; }
+    [[nodiscard]] virtual float GetGroundCollisionTestingRadius() const { return GetCollisionRadius() / 2; }
 
     void AddAllowedLooter(ObjectGuid guid);
     void ResetAllowedLooters();

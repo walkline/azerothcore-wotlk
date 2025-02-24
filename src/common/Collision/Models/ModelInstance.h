@@ -23,10 +23,11 @@
 #include <G3D/Matrix3.h>
 #include <G3D/Ray.h>
 #include <G3D/Vector3.h>
+#include <unordered_set>
+#include "WorldModel.h"
 
 namespace VMAP
 {
-    class WorldModel;
     struct AreaInfo;
     struct LocationInfo;
     enum class ModelIgnoreFlags : uint32;
@@ -61,11 +62,13 @@ namespace VMAP
 
     class ModelInstance: public ModelSpawn
     {
+        friend class MapRayWithSpherePlacementCallback;
     public:
         ModelInstance() { }
         ModelInstance(const ModelSpawn& spawn, WorldModel* model);
         void setUnloaded() { iModel = nullptr; }
         bool intersectRay(const G3D::Ray& pRay, float& pMaxDist, bool StopAtFirstHit, ModelIgnoreFlags ignoreFlags) const;
+        bool intersectRayWithSpherePlacement(const G3D::Ray& pRay, float sphereRadius, float& pMaxDist, bool StopAtFirstHit, ModelIgnoreFlags ignoreFlags, std::unordered_set<Triangle, TriangleHasher>* trianglesInSphere) const;
         void intersectPoint(const G3D::Vector3& p, AreaInfo& info) const;
         bool GetLocationInfo(const G3D::Vector3& p, LocationInfo& info) const;
         bool GetLiquidLevel(const G3D::Vector3& p, LocationInfo& info, float& liqHeight) const;

@@ -60,6 +60,7 @@ namespace VMAP
 
     private:
         bool GetIntersectionTime(const G3D::Ray& pRay, float& pMaxDist, bool StopAtFirstHit, ModelIgnoreFlags ignoreFlags) const;
+        G3D::Vector3 GetSafeGroundByPlacingSphere(const G3D::Ray& pRay, float collisionRadius, float pMaxDist) const;
         //bool containsLoadedMapTile(unsigned int pTileIdent) const { return(iLoadedMapTiles.containsKey(pTileIdent)); }
     public:
         static std::string getTileFileName(uint32 mapID, uint32 tileX, uint32 tileY);
@@ -73,6 +74,7 @@ namespace VMAP
         [[nodiscard]] bool isInLineOfSight(const G3D::Vector3& pos1, const G3D::Vector3& pos2, ModelIgnoreFlags ignoreFlags) const;
         bool GetObjectHitPos(const G3D::Vector3& pos1, const G3D::Vector3& pos2, G3D::Vector3& pResultHitPos, float pModifyDist) const;
         [[nodiscard]] float getHeight(const G3D::Vector3& pPos, float maxSearchDist) const;
+        [[nodiscard]] G3D::Vector3 getSafeGroundByPlacingSpere(const G3D::Vector3& pPos, float collisionRadius, float maxSearchDist) const;
         bool GetAreaInfo(G3D::Vector3& pos, uint32& flags, int32& adtId, int32& rootId, int32& groupId) const;
         bool GetLocationInfo(const G3D::Vector3& pos, LocationInfo& info) const;
 

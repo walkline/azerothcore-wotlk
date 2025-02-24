@@ -1427,11 +1427,21 @@ void Spell::SelectImplicitCasterDestTargets(SpellEffIndex effIndex, SpellImplici
                 Position pos;
                 Position lastpos;
                 m_caster->GetPosition(startx, starty, startz, starto);
+
                 pos.Relocate(startx, starty, startz, starto);
                 float destx = pos.GetPositionX() + distance * cos(pos.GetOrientation());
                 float desty = pos.GetPositionY() + distance * sin(pos.GetOrientation());
 
-                float ground = map->GetHeight(phasemask, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ());
+                // Added GROUND_HEIGHT_TOLERANCE to account for cases where, during a jump,
+                // the Z position may be slightly below the vmap ground level.
+                // Without this tolerance, a ray trace might incorrectly attempt to find ground
+                // beneath the actual surface.
+                //
+                // Example:
+                //    actual vmap ground: -56.342392
+                //    Z position:         -56.347195
+                float searchGroundZPos = pos.GetPositionZ()+GROUND_HEIGHT_TOLERANCE;
+                float ground = map->GetHeight(phasemask, pos.GetPositionX(), pos.GetPositionY(), searchGroundZPos);
 
                 bool isCasterInWater = m_caster->IsInWater();
                 if (!m_caster->HasUnitMovementFlag(MOVEMENTFLAG_FALLING) || (pos.GetPositionZ() - ground < distance))
@@ -1610,7 +1620,8 @@ void Spell::SelectImplicitCasterDestTargets(SpellEffIndex effIndex, SpellImplici
                         // we have correct destz now
                     }
 
-                    lastpos.Relocate(destx, desty, destz, pos.GetOrientation());
+                    auto safeGround = map->GetSafeGroundPos(destx, desty, destz, m_caster->GetGroundCollisionTestingRadius());
+                    lastpos.Relocate(safeGround.x, safeGround.y, safeGround.z, pos.GetOrientation());
                     dest = SpellDestination(lastpos);
                 }
                 else

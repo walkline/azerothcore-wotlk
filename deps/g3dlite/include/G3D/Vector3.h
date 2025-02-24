@@ -22,7 +22,6 @@
 #include "G3D/Table.h"
 #include "G3D/HashTrait.h"
 #include "G3D/PositionTrait.h"
-#include "G3D/Vector2.h"
 #include <iostream>
 #include <string>
 
