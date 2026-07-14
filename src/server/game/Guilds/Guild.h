@@ -830,6 +830,9 @@ private:
     void _CreateDefaultGuildRanks(LocaleConstant loc);
     // Creates new rank
     bool _CreateRank(std::string_view name, uint32 rights);
+    // Cluster mode: creates the guild through the guild service and mirrors
+    // the created state in memory (no direct database writes)
+    bool CreateInCluster(Player* pLeader, std::string_view name);
     // Update account number when member added/removed from guild
     void _UpdateAccountsNumber();
     bool _IsLeader(Player* player) const;

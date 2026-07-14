@@ -32,6 +32,11 @@ uint64_t TC9GetNextAvailableInstanceGuid(int realmID);
 /* Map loading notification */
 void TC9ReadyToAcceptPlayersFromMaps(uint32_t* maps, int mapsLen);
 
+/* Guild creation through the guild service (it allocates the id, inserts
+ * guild/ranks/leader rows, hydrates its cache and publishes guild.created).
+ * Blocking gRPC call, do not call from map update threads. Returns 0 on
+ * success and stores the created guild id in *guildID, -1 on error. */
+int TC9GuildCreate(uint64_t leaderGUID, const char* name, uint64_t* guildID);
 /* Matchmaking notifications */
 void TC9PlayerLeftBattleground(uint64_t playerGUID, uint32_t realmID, uint32_t instanceID);
 void TC9BattlegroundStatusChanged(uint32_t instanceID, uint8_t status);

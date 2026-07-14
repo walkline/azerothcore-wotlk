@@ -117,6 +117,8 @@ void TC9SetOnMapsReassignedHook(OnMapsReassignedHook h) { panicWithTC9Unavailabl
 //
 void TC9SetMonitoringDataCollectorHandler(MonitoringDataCollectorHandler h) { panicWithTC9Unavailable("TC9SetOnMapsReassignedHook"); }
 
+// TC9GuildCreate creates a guild through the guild service
+int TC9GuildCreate(uint64_t leaderGUID, const char* name, uint64_t* guildID) { panicWithTC9Unavailable("TC9GuildCreate"); return -1; }
 // TC9PlayerLeftBattleground notifies matchmaking server that player left battleground
 //
 void TC9PlayerLeftBattleground(uint64_t playerGUID, uint32_t realmID, uint32_t instanceID) { panicWithTC9Unavailable("TC9PlayerLeftBattleground"); }

@@ -159,6 +159,13 @@ void ToCloud9Sidecar::OnBattlegroundStatusChanged(uint32 instanceID, uint8 statu
     TC9BattlegroundStatusChanged(instanceID, status);
 }
 
+bool ToCloud9Sidecar::GuildCreate(uint64 leaderGuid, std::string const& name, uint64& guildId)
+{
+    if (!_clusterModeEnabled)
+        return false;
+
+    return TC9GuildCreate(leaderGuid, name.c_str(), &guildId) == 0;
+}
 void ToCloud9Sidecar::OnMapsReassigned(uint32* addedMaps, int addedMapsSize, uint32* removedMaps, int removedMapsSize)
 {
     for (int i = 0; i < addedMapsSize; i++)

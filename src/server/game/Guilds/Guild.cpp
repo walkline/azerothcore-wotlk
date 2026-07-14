@@ -34,6 +34,7 @@
 #include "RBAC.h"
 #include "ScriptMgr.h"
 #include "SocialMgr.h"
+#include "TC9Sidecar.h"
 #include "World.h"
 #include "WorldSession.h"
 #include <boost/iterator/counting_iterator.hpp>
@@ -1064,6 +1065,12 @@ bool Guild::Create(Player* pLeader, std::string_view name)
     if (!pLeaderSession)
         return false;
 
+    // Cluster mode: the guild service owns guild creation. This covers both
+    // creation paths that never reach the gateway: the petition turn-in
+    // opcode and the .guild create command.
+    if (sToCloud9Sidecar->ClusterModeEnabled())
+        return CreateInCluster(pLeader, name);
+
     m_id = sGuildMgr->GenerateGuildId();
     m_leaderGuid = pLeader->GetGUID();
     m_name = name;
@@ -1110,6 +1117,64 @@ bool Guild::Create(Player* pLeader, std::string_view name)
         sScriptMgr->OnGuildCreate(this, pLeader, m_name);
 
     return ret;
+}
+
+// Cluster mode: the guild service allocates the guild id and inserts the
+// guild, default ranks and leader rows in one transaction (and hydrates its
+// cache + publishes guild.created). Mirror that exact state in memory
+// without touching the database again.
+bool Guild::CreateInCluster(Player* pLeader, std::string_view name)
+{
+    WorldSession* pLeaderSession = pLeader->GetSession();
+
+    uint64 guildId = 0;
+    if (!sToCloud9Sidecar->GuildCreate(pLeader->GetGUID().GetCounter(), std::string(name), guildId))
+        return false;
+
+    m_id = uint32(guildId);
+    m_leaderGuid = pLeader->GetGUID();
+    m_name = name;
+    m_info = "";
+    m_motd = ""; // the guild service inserts an empty motd
+    m_bankMoney = 0;
+    m_createdDate = GameTime::GetGameTime().count();
+
+    LOG_DEBUG("guild", "GUILD: created guild [{}] id {} for leader {} ({}) through the guild service",
+        m_name, m_id, pLeader->GetName(), m_leaderGuid.ToString());
+
+    // Same rank layout the guild service inserted (guild master with all
+    // rights, everyone else chat only).
+    uint32 chatRights = GR_RIGHT_GCHATLISTEN | GR_RIGHT_GCHATSPEAK;
+    m_ranks.emplace_back(m_id, GR_GUILDMASTER, "Guild Master", GR_RIGHT_ALL, 0);
+    m_ranks.emplace_back(m_id, GR_OFFICER, "Officer", chatRights, 0);
+    m_ranks.emplace_back(m_id, GR_VETERAN, "Veteran", chatRights, 0);
+    m_ranks.emplace_back(m_id, GR_MEMBER, "Member", chatRights, 0);
+    m_ranks.emplace_back(m_id, GR_INITIATE, "Initiate", chatRights, 0);
+
+    // The leader guild_member row already exists - mirror AddMember without
+    // the database write.
+    Player::RemovePetitionsAndSigns(m_leaderGuid, GUILD_CHARTER_TYPE);
+
+    uint8 rankId = GR_GUILDMASTER;
+    auto [memberIt, isNew] = m_members.try_emplace(m_leaderGuid.GetCounter(), m_id, m_leaderGuid, rankId);
+    if (!isNew)
+        return false;
+
+    Member& member = memberIt->second;
+    pLeader->SetInGuild(m_id);
+    pLeader->SetGuildIdInvited(0);
+    pLeader->SetRank(rankId);
+    member.SetStats(pLeader);
+    SendLoginInfo(pLeaderSession);
+
+    _UpdateAccountsNumber();
+    _LogEvent(GUILD_EVENT_LOG_JOIN_GUILD, m_leaderGuid);
+    _BroadcastEvent(GE_JOINED, m_leaderGuid, pLeader->GetName());
+
+    sScriptMgr->OnGuildAddMember(this, pLeader, rankId);
+    sScriptMgr->OnGuildCreate(this, pLeader, m_name);
+
+    return true;
 }
 
 // Disbands guild and deletes all related data from database

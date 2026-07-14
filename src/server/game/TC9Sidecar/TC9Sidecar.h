@@ -56,6 +56,10 @@ public:
     void OnPlayerLeftBattleground(uint64 playerGUID, uint32 realmID, uint32 instanceID);
     void OnBattlegroundStatusChanged(uint32 instanceID, uint8 status);
 
+    // Cluster mode: creates a guild through the guild service (allocates the
+    // id, inserts guild/ranks/leader rows, publishes guild.created). No-op
+    // outside cluster mode. Blocking; do not call from map update threads.
+    bool GuildCreate(uint64 leaderGuid, std::string const& name, uint64& guildId);
 private:
     static void OnMapsReassigned(uint32* addedMaps, int addedMapsSize, uint32* removedMaps, int removedMapsSize);
 
