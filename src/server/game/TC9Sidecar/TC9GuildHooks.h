@@ -29,6 +29,7 @@ public:
     static void OnGuildMemberAdded(uint64 guild, uint64 character);
     static void OnGuildMemberRemoved(uint64 guild, uint64 character);
     static void OnGuildMemberLeft(uint64 guild, uint64 character);
+    static void OnGuildCreated(uint64 guild, char* guildName, uint64 leader, uint64* memberGuids, int memberGuidsSize);
 };
 
 #endif // _TC9_GUILD_HOOKS_H

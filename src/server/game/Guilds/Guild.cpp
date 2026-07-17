@@ -1112,6 +1112,100 @@ bool Guild::Create(Player* pLeader, std::string_view name)
     return ret;
 }
 
+// Cluster mode: mirror a guild the guild service just created (rows already
+// in the database) into this worldserver's memory. Runs on every shard from
+// the guild.created event consumer; no guild table writes, only offline
+// member stat reads.
+bool Guild::MirrorClusterCreated(uint32 guildId, std::string_view name, ObjectGuid leaderGuid, std::vector<ObjectGuid> const& memberGuids)
+{
+    m_id = guildId;
+    m_leaderGuid = leaderGuid;
+    m_name = name;
+    m_info = "";
+    m_motd = ""; // the guild service inserts an empty motd
+    m_bankMoney = 0;
+    m_createdDate = GameTime::GetGameTime().count();
+
+    LOG_DEBUG("guild", "GUILD: mirrored guild [{}] id {} for leader {} created by the guild service",
+        m_name, m_id, m_leaderGuid.ToString());
+
+    // Same rank layout the guild service inserted (guild master and officer
+    // with all rights, everyone else chat only).
+    uint32 chatRights = GR_RIGHT_GCHATLISTEN | GR_RIGHT_GCHATSPEAK;
+    m_ranks.emplace_back(m_id, GR_GUILDMASTER, "Guild Master", GR_RIGHT_ALL, 0);
+    m_ranks.emplace_back(m_id, GR_OFFICER, "Officer", GR_RIGHT_ALL, 0);
+    m_ranks.emplace_back(m_id, GR_VETERAN, "Veteran", chatRights, 0);
+    m_ranks.emplace_back(m_id, GR_MEMBER, "Member", chatRights, 0);
+    m_ranks.emplace_back(m_id, GR_INITIATE, "Initiate", chatRights, 0);
+
+    if (!_MirrorAddMember(leaderGuid, GR_GUILDMASTER))
+        return false;
+
+    // Petition signatories inserted as members in the same transaction
+    for (ObjectGuid memberGuid : memberGuids)
+        if (!_MirrorAddMember(memberGuid, GR_INITIATE))
+            LOG_WARN("guild", "GUILD: could not mirror member {} of guild {} (duplicate or stats load failed), roster incomplete until reload",
+                memberGuid.ToString(), m_id);
+
+    _UpdateAccountsNumber();
+
+    if (Player* leader = ObjectAccessor::FindPlayer(leaderGuid))
+        sScriptMgr->OnGuildCreate(this, leader, m_name);
+
+    return true;
+}
+
+// Mirror of AddMember without the guild_member insert (the guild service
+// already wrote the row in the creation transaction).
+bool Guild::_MirrorAddMember(ObjectGuid guid, uint8 rankId)
+{
+    auto [memberIt, isNew] = m_members.try_emplace(guid.GetCounter(), m_id, guid, rankId);
+    if (!isNew)
+        return false;
+
+    Member& member = memberIt->second;
+    if (Player* player = ObjectAccessor::FindPlayer(guid))
+    {
+        player->SetInGuild(m_id);
+        player->SetGuildIdInvited(0);
+        player->SetRank(rankId);
+        member.SetStats(player);
+        SendLoginInfo(player->GetSession());
+
+        uint8 rank = rankId;
+        sScriptMgr->OnGuildAddMember(this, player, rank);
+    }
+    else
+    {
+        member.ResetFlags();
+
+        bool ok = false;
+        // xinef: sync query - player must exist
+        CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHAR_DATA_FOR_GUILD);
+        stmt->SetData(0, guid.GetCounter());
+        if (PreparedQueryResult result = CharacterDatabase.Query(stmt))
+        {
+            Field* fields = result->Fetch();
+            member.SetStats(
+                fields[0].Get<std::string>(),
+                fields[1].Get<uint8>(),
+                fields[2].Get<uint8>(),
+                fields[3].Get<uint8>(),
+                fields[4].Get<uint16>(),
+                fields[5].Get<uint32>());
+
+            ok = member.CheckStats();
+        }
+        if (!ok)
+        {
+            m_members.erase(memberIt);
+            return false;
+        }
+    }
+
+    return true;
+}
+
 // Disbands guild and deletes all related data from database
 void Guild::Disband()
 {

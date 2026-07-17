@@ -53,6 +53,12 @@ void TC9SetOnGuildMemberRemovedHook(OnGuildMemberRemovedHook h) { panicWithTC9Un
 // TC9SetOnGuildMemberLeftHook sets hook for guild member left event.
 void TC9SetOnGuildMemberLeftHook(OnGuildMemberLeftHook h) { panicWithTC9Unavailable("TC9SetOnGuildMemberLeftHook"); }
 
+// TC9SetOnGuildCreatedHook sets hook for guild created event.
+void TC9SetOnGuildCreatedHook(OnGuildCreatedHook h) { panicWithTC9Unavailable("TC9SetOnGuildCreatedHook"); }
+
+// TC9SetCanTurnInGuildPetitionHandler sets handler for guild petition turn-in validation.
+void TC9SetCanTurnInGuildPetitionHandler(CanTurnInGuildPetitionHandler h) { panicWithTC9Unavailable("TC9SetCanTurnInGuildPetitionHandler"); }
+
 // TC9ProcessEventsHooks calls all events hooks.
 void TC9ProcessEventsHooks() { panicWithTC9Unavailable("TC9ProcessEventsHooks"); }
 
