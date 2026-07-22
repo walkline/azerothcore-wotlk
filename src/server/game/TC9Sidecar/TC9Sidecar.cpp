@@ -108,6 +108,7 @@ void ToCloud9Sidecar::SetupHooks()
 void ToCloud9Sidecar::SetupGrpcHandlers()
 {
     TC9SetGetPlayerItemsByGuidsHandler(&ToCloud9GrpcHandler::GetPlayerItemsByGuids);
+    TC9SetGetPlayerItemByPosHandler(&ToCloud9GrpcHandler::GetPlayerItemByPos);
     TC9SetRemoveItemsWithGuidsFromPlayerHandler(&ToCloud9GrpcHandler::RemoveItemsWithGuidsFromPlayer);
     TC9SetAddExistingItemToPlayerHandler(&ToCloud9GrpcHandler::AddExistingItemToPlayer);
 

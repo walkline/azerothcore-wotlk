@@ -94,6 +94,9 @@ void TC9SetCanPlayerInteractWithGOAndTypeHandler(CanPlayerInteractWithGOAndTypeH
 // TC9SetGetPlayerItemsByGuidsHandler sets handler for getting players item by guids request.
 void TC9SetGetPlayerItemsByGuidsHandler(GetPlayerItemsByGuidsHandler h) { panicWithTC9Unavailable("TC9SetGetPlayerItemsByGuidsHandler"); }
 
+// TC9SetGetPlayerItemByPosHandler sets handler for getting a player item by its inventory position request.
+void TC9SetGetPlayerItemByPosHandler(GetPlayerItemByPosHandler h) { panicWithTC9Unavailable("TC9SetGetPlayerItemByPosHandler"); }
+
 // TC9SetRemoveItemsWithGuidsFromPlayerHandler sets handler for removing items by guids from player request.
 void TC9SetRemoveItemsWithGuidsFromPlayerHandler(RemoveItemsWithGuidsFromPlayerHandler h) { panicWithTC9Unavailable("TC9SetRemoveItemsWithGuidsFromPlayerHandler"); }
 

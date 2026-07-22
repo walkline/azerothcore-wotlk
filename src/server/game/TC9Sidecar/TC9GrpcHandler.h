@@ -29,6 +29,7 @@ public:
 
     // Items
     static GetPlayerItemsByGuidsResponse          GetPlayerItemsByGuids(uint64 player, uint64* items, int items_len);
+    static GetPlayerItemByPosResponse             GetPlayerItemByPos(uint64 player, uint8 bag, uint8 slot);
     static RemoveItemsWithGuidsFromPlayerResponse RemoveItemsWithGuidsFromPlayer(uint64 player, uint64* items, int itemsLen, uint64 assignToPlayer);
     static PlayerItemErrorCode                    AddExistingItemToPlayer(AddExistingItemToPlayerRequest*);
 

@@ -80,6 +80,44 @@ GetPlayerItemsByGuidsResponse ToCloud9GrpcHandler::GetPlayerItemsByGuids(uint64 
     return resp;
 }
 
+GetPlayerItemByPosResponse ToCloud9GrpcHandler::GetPlayerItemByPos(uint64 playerGuid, uint8 bag, uint8 slot)
+{
+    GetPlayerItemByPosResponse resp{};
+    resp.found = false;
+
+    Player* player = ObjectAccessor::FindPlayer(ObjectGuid(playerGuid));
+    if (!player)
+    {
+        resp.errorCode = PlayerItemErrorCodePlayerNotFound;
+        return resp;
+    }
+
+    resp.errorCode = PlayerItemErrorCodeNoError;
+
+    Item* pItem = player->GetItemByPos(bag, slot);
+    if (!pItem)
+        return resp;
+
+    resp.found = true;
+    resp.item.guid = pItem->GetGUID().GetRawValue();
+    resp.item.entry = pItem->GetEntry();
+    resp.item.owner = playerGuid;
+    resp.item.bagSlot = pItem->GetBagSlot();
+    resp.item.slot = pItem->GetSlot();
+    resp.item.isTradable = pItem->CanBeTraded(true);
+    resp.item.count = pItem->GetCount();
+    resp.item.flags = pItem->GetUInt32Value(ITEM_FIELD_FLAGS);
+    resp.item.durability = pItem->GetUInt32Value(ITEM_FIELD_DURABILITY);
+    resp.item.randomPropertyID = pItem->GetItemRandomPropertyId();
+
+    // Don't forget to delete on "that" side.
+    char* text = (char*)malloc(sizeof(char) * (pItem->GetText().length() + 1));
+    strcpy(text, pItem->GetText().c_str());
+    resp.item.text = text;
+
+    return resp;
+}
+
 RemoveItemsWithGuidsFromPlayerResponse ToCloud9GrpcHandler::RemoveItemsWithGuidsFromPlayer(uint64 playerGuid, uint64* items, int itemsLen, uint64 assignToPlayerGuid)
 {
     Player *player = ObjectAccessor::FindPlayer(ObjectGuid(playerGuid));
