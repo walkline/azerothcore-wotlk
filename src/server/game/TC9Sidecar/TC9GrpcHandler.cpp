@@ -18,6 +18,7 @@
 #include "TC9GrpcHandler.h"
 #include "Bag.h"
 #include "BattlegroundMgr.h"
+#include "Guild.h"
 #include "Item.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
@@ -110,11 +111,35 @@ GetPlayerItemByPosResponse ToCloud9GrpcHandler::GetPlayerItemByPos(uint64 player
     resp.item.durability = pItem->GetUInt32Value(ITEM_FIELD_DURABILITY);
     resp.item.randomPropertyID = pItem->GetItemRandomPropertyId();
 
-    // Don't forget to delete on "that" side.
+    // Allocated here, released with free() on the caller side.
     char* text = (char*)malloc(sizeof(char) * (pItem->GetText().length() + 1));
     strcpy(text, pItem->GetText().c_str());
     resp.item.text = text;
 
+    return resp;
+}
+
+SetPlayerGuildFieldsResponse ToCloud9GrpcHandler::SetPlayerGuildFields(uint64 playerGuid, uint32 guildId, uint32 rank)
+{
+    SetPlayerGuildFieldsResponse resp{};
+    resp.errorCode = PlayerGuildErrorCodeNoError;
+    resp.applied = false;
+
+    Player* player = ObjectAccessor::FindPlayer(ObjectGuid(playerGuid));
+    if (!player)
+        return resp;
+
+    if (rank >= GUILD_RANKS_MAX_COUNT)
+        return resp;
+
+    // The client gates the guild control UI on these public unit fields; in
+    // cluster mode the guild service owns membership, so refresh them on the
+    // live object to avoid a relog after a rank change.
+    if (player->GetGuildId() != guildId)
+        player->SetInGuild(guildId);
+    player->SetRank(static_cast<uint8>(rank));
+
+    resp.applied = true;
     return resp;
 }
 

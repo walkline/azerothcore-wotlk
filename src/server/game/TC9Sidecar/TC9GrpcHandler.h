@@ -37,6 +37,9 @@ public:
     static GetMoneyForPlayerResponse    GetMoneyForPlayer(uint64 player);
     static ModifyMoneyForPlayerResponse ModifyMoneyForPlayer(uint64 player, int32 value);
 
+    // Guild
+    static SetPlayerGuildFieldsResponse SetPlayerGuildFields(uint64 player, uint32 guildId, uint32 rank);
+
     // Interactions
     static CanPlayerInteractWithGOAndTypeResponse   CanPlayerInteractWithGOAndType(uint64 player, uint64 go, uint8 goType);
     static CanPlayerInteractWithNPCAndFlagsResponse CanPlayerInteractWithNPCAndFlags(uint64 player, uint64 npc, uint32 unitFlags);

@@ -111,6 +111,9 @@ void TC9SetGetMoneyForPlayerHandler(GetMoneyForPlayerHandler h) { panicWithTC9Un
 //
 void TC9SetModifyMoneyForPlayerHandler(ModifyMoneyForPlayerHandler h) { panicWithTC9Unavailable("TC9SetModifyMoneyForPlayerHandler"); }
 
+// TC9SetSetPlayerGuildFieldsHandler sets handler for refreshing guild id/rank on a live player request.
+void TC9SetSetPlayerGuildFieldsHandler(SetPlayerGuildFieldsHandler h) { panicWithTC9Unavailable("TC9SetSetPlayerGuildFieldsHandler"); }
+
 
 // TC9SetOnMapsReassignedHook sets hook for maps reassigning by servers registry event.
 //
