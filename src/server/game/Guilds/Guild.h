@@ -680,6 +680,9 @@ public:
     ~Guild();
 
     bool Create(Player* pLeader, std::string_view name);
+    // Cluster mode: mirrors a guild created by the guild service in memory
+    // (rows already in the database, no guild table writes)
+    bool MirrorClusterCreated(uint32 guildId, std::string_view name, ObjectGuid leaderGuid, std::vector<ObjectGuid> const& memberGuids);
     void Disband();
 
     // Getters
@@ -830,6 +833,9 @@ private:
     void _CreateDefaultGuildRanks(LocaleConstant loc);
     // Creates new rank
     bool _CreateRank(std::string_view name, uint32 rights);
+    // Cluster mode: mirror of AddMember without the guild_member insert
+    // (the guild service already wrote the row)
+    bool _MirrorAddMember(ObjectGuid guid, uint8 rankId);
     // Update account number when member added/removed from guild
     void _UpdateAccountsNumber();
     bool _IsLeader(Player* player) const;

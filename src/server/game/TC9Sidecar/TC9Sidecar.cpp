@@ -94,6 +94,7 @@ void ToCloud9Sidecar::SetupHooks()
     TC9SetOnGuildMemberLeftHook(&ToCloud9GuildHooks::OnGuildMemberLeft);
     TC9SetOnGuildMemberAddedHook(&ToCloud9GuildHooks::OnGuildMemberAdded);
     TC9SetOnGuildMemberRemovedHook(&ToCloud9GuildHooks::OnGuildMemberRemoved);
+    TC9SetOnGuildCreatedHook(&ToCloud9GuildHooks::OnGuildCreated);
 
     TC9SetOnGroupCreatedHook(&ToCloud9GroupHooks::OnGroupCreated);
     TC9SetOnGroupDisbandedHook(&ToCloud9GroupHooks::OnGroupDisbanded);
@@ -113,6 +114,8 @@ void ToCloud9Sidecar::SetupGrpcHandlers()
 
     TC9SetGetMoneyForPlayerHandler(&ToCloud9GrpcHandler::GetMoneyForPlayer);
     TC9SetModifyMoneyForPlayerHandler(&ToCloud9GrpcHandler::ModifyMoneyForPlayer);
+
+    TC9SetCanTurnInGuildPetitionHandler(&ToCloud9GrpcHandler::CanTurnInGuildPetition);
 
     TC9SetCanPlayerInteractWithGOAndTypeHandler(&ToCloud9GrpcHandler::CanPlayerInteractWithGOAndType);
     TC9SetCanPlayerInteractWithNPCAndFlagsHandler(&ToCloud9GrpcHandler::CanPlayerInteractWithNPCAndFlags);

@@ -10,6 +10,7 @@
 #include "events-guild.h"
 #include "events-servers-registry.h"
 #include "monitoring.h"
+#include "petition-api.h"
 #include "player-interactions-api.h"
 #include "player-items-api.h"
 #include "player-money-api.h"
@@ -76,6 +77,9 @@ void TC9SetAddExistingItemToPlayerHandler(AddExistingItemToPlayerHandler h);
 
 void TC9SetGetMoneyForPlayerHandler(GetMoneyForPlayerHandler h);
 void TC9SetModifyMoneyForPlayerHandler(ModifyMoneyForPlayerHandler h);
+
+void TC9SetOnGuildCreatedHook(OnGuildCreatedHook h);
+void TC9SetCanTurnInGuildPetitionHandler(CanTurnInGuildPetitionHandler h);
 
 #ifdef __cplusplus
 }

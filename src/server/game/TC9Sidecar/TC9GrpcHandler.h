@@ -45,6 +45,9 @@ public:
     static BattlegroundErrorCode AddPlayersToBattleground(BattlegroundAddPlayersRequest* request);
     static BattlegroundJoinCheckErrorCode CanPlayerJoinBattlegroundQueue(uint64 player);
     static BattlegroundJoinCheckErrorCode CanPlayerTeleportToBattleground(uint64 player);
+
+    // Petitions
+    static GuildPetitionValidationResult CanTurnInGuildPetition(uint64 player, uint64 petitionItemGuid);
 };
 
 #endif // _TC9_GRPC_HANDLER_H

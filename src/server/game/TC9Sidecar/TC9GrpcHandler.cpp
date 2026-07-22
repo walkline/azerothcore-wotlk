@@ -20,7 +20,10 @@
 #include "BattlegroundMgr.h"
 #include "Item.h"
 #include "ObjectAccessor.h"
+#include "PetitionMgr.h"
 #include "Player.h"
+#include "World.h"
+#include "WorldSession.h"
 
 GetPlayerItemsByGuidsResponse ToCloud9GrpcHandler::GetPlayerItemsByGuids(uint64 playerGuid, uint64* items, int itemsLen)
 {
@@ -352,4 +355,83 @@ BattlegroundJoinCheckErrorCode ToCloud9GrpcHandler::CanPlayerTeleportToBattlegro
         return BattlegroundJoinCheckErrorCodeResponseIsFalse;
 
     return BattlegroundJoinCheckErrorCodeOK;
+}
+
+// Validates a guild petition turn-in on the world thread on behalf of the
+// gateway (same checks as WorldSession::HandleTurnInPetitionOpcode, except
+// guild name uniqueness: only the guild service sees every realm's guilds,
+// so it stays the authority and rejects duplicates on CreateGuild). On Ok
+// the gateway proceeds with guild creation through the guild service.
+GuildPetitionValidationResult ToCloud9GrpcHandler::CanTurnInGuildPetition(uint64 playerGuid, uint64 petitionItemGuid)
+{
+    GuildPetitionValidationResult result;
+    result.status = GuildPetitionCheckStatusPlayerNotFound;
+    result.guildName = nullptr;
+    result.signatoryGUIDs = nullptr;
+    result.signatoryGUIDsSize = 0;
+
+    Player* player = ObjectAccessor::FindPlayer(ObjectGuid(playerGuid));
+    if (!player)
+        return result;
+
+    ObjectGuid petitionGuid = ObjectGuid(petitionItemGuid);
+
+    // The charter item must be in the player's inventory
+    if (!player->GetItemByGuid(petitionGuid))
+    {
+        result.status = GuildPetitionCheckStatusPetitionNotFound;
+        return result;
+    }
+
+    Petition const* petition = sPetitionMgr->GetPetition(petitionGuid);
+    if (!petition)
+    {
+        result.status = GuildPetitionCheckStatusPetitionNotFound;
+        return result;
+    }
+
+    if (player->GetGUID() != petition->ownerGuid)
+    {
+        result.status = GuildPetitionCheckStatusNotPetitionOwner;
+        return result;
+    }
+
+    // Arena charters keep the in-process flow, the gateway forwards the packet
+    if (petition->petitionType != GUILD_CHARTER_TYPE)
+    {
+        result.status = GuildPetitionCheckStatusNotGuildPetition;
+        return result;
+    }
+
+    if (player->GetGuildId())
+    {
+        result.status = GuildPetitionCheckStatusAlreadyInGuild;
+        return result;
+    }
+
+    Signatures const* signatures = sPetitionMgr->GetSignature(petitionGuid);
+    uint32 signs = signatures ? signatures->signatureMap.size() : 0;
+    if (signs < sWorld->getIntConfig(CONFIG_MIN_PETITION_SIGNS))
+    {
+        result.status = GuildPetitionCheckStatusNeedMoreSignatures;
+        return result;
+    }
+
+    // Don't forget to delete on "that" side.
+    char* name = static_cast<char*>(malloc(petition->petitionName.length() + 1));
+    strcpy(name, petition->petitionName.c_str());
+    result.guildName = name;
+
+    if (signs > 0)
+    {
+        // Don't forget to delete on "that" side.
+        result.signatoryGUIDs = static_cast<uint64_t*>(malloc(sizeof(uint64_t) * signs));
+        int i = 0;
+        for (auto const& itr : signatures->signatureMap)
+            result.signatoryGUIDs[i++] = itr.first.GetRawValue();
+        result.signatoryGUIDsSize = int(signs);
+    }
+
+    result.status = GuildPetitionCheckStatusOk;
+    return result;
 }
