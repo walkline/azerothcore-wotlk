@@ -94,6 +94,9 @@ void TC9SetCanPlayerInteractWithGOAndTypeHandler(CanPlayerInteractWithGOAndTypeH
 // TC9SetGetPlayerItemsByGuidsHandler sets handler for getting players item by guids request.
 void TC9SetGetPlayerItemsByGuidsHandler(GetPlayerItemsByGuidsHandler h) { panicWithTC9Unavailable("TC9SetGetPlayerItemsByGuidsHandler"); }
 
+// TC9SetGetPlayerItemByPosHandler sets handler for getting a player item by its inventory position request.
+void TC9SetGetPlayerItemByPosHandler(GetPlayerItemByPosHandler h) { panicWithTC9Unavailable("TC9SetGetPlayerItemByPosHandler"); }
+
 // TC9SetRemoveItemsWithGuidsFromPlayerHandler sets handler for removing items by guids from player request.
 void TC9SetRemoveItemsWithGuidsFromPlayerHandler(RemoveItemsWithGuidsFromPlayerHandler h) { panicWithTC9Unavailable("TC9SetRemoveItemsWithGuidsFromPlayerHandler"); }
 
@@ -107,6 +110,9 @@ void TC9SetGetMoneyForPlayerHandler(GetMoneyForPlayerHandler h) { panicWithTC9Un
 // TC9SetModifyMoneyForPlayerHandler sets handler for modify money for given player request.
 //
 void TC9SetModifyMoneyForPlayerHandler(ModifyMoneyForPlayerHandler h) { panicWithTC9Unavailable("TC9SetModifyMoneyForPlayerHandler"); }
+
+// TC9SetSetPlayerGuildFieldsHandler sets handler for refreshing guild id/rank on a live player request.
+void TC9SetSetPlayerGuildFieldsHandler(SetPlayerGuildFieldsHandler h) { panicWithTC9Unavailable("TC9SetSetPlayerGuildFieldsHandler"); }
 
 
 // TC9SetOnMapsReassignedHook sets hook for maps reassigning by servers registry event.
