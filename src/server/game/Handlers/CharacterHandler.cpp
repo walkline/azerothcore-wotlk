@@ -224,6 +224,16 @@ bool LoginQueryHolder::Initialize()
     stmt->SetData(0, rawGUID);
     res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_OFFLINE_ACHIEVEMENTS_UPDATES, stmt);
 
+    // Cluster mode: local GuildMgr/CharacterCache can be stale for guilds
+    // touched since this shard booted, so guild membership is loaded from the
+    // shared characters DB with the rest of the login queries.
+    if (sToCloud9Sidecar->ClusterModeEnabled())
+    {
+        stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_GUILD_MEMBER_GUILD_RANK);
+        stmt->SetData(0, rawGUID);
+        res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_CLUSTER_GUILD, stmt);
+    }
+
     return res;
 }
 
@@ -879,8 +889,21 @@ void WorldSession::HandlePlayerLoginFromDB(LoginQueryHolder const& holder)
     }
     else
     {
-        pCurrChar->SetInGuild(0);
-        pCurrChar->SetRank(0);
+        // The guildserver owns guild state, but PLAYER_GUILDID still has to
+        // be set by this worldserver or the client never shows the guild UI
+        // again after a reconnect. Local GuildMgr/CharacterCache can be
+        // stale for guilds touched since this shard booted, so the login
+        // query holder loads it from the shared characters DB.
+        uint32 guildId = 0;
+        uint8 rankId = 0;
+        if (PreparedQueryResult guildResult = holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_CLUSTER_GUILD))
+        {
+            Field* fields = guildResult->Fetch();
+            guildId = fields[0].Get<uint32>();
+            rankId = fields[1].Get<uint8>();
+        }
+        pCurrChar->SetInGuild(guildId);
+        pCurrChar->SetRank(rankId);
     }
 
     data.Initialize(SMSG_LEARNED_DANCE_MOVES, 4 + 4);
