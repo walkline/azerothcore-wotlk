@@ -79,6 +79,9 @@ void TC9SetOnGuildMemberRemovedHook(OnGuildMemberRemovedHook h) { panicWithTC9Un
 // TC9SetOnGuildMemberLeftHook sets hook for guild member left event.
 void TC9SetOnGuildMemberLeftHook(OnGuildMemberLeftHook h) { panicWithTC9Unavailable("TC9SetOnGuildMemberLeftHook"); }
 
+// TC9SetOnGuildCreatedHook sets hook for guild created event.
+void TC9SetOnGuildCreatedHook(OnGuildCreatedHook h) { panicWithTC9Unavailable("TC9SetOnGuildCreatedHook"); }
+
 // TC9ProcessEventsHooks calls all events hooks.
 void TC9ProcessEventsHooks() { panicWithTC9Unavailable("TC9ProcessEventsHooks"); }
 
@@ -125,6 +128,11 @@ void TC9SetRemoveItemsWithGuidsFromPlayerHandler(RemoveItemsWithGuidsFromPlayerH
 
 // TC9SetAddExistingItemToPlayerHandler sets handler for adding item to player request.
 void TC9SetAddExistingItemToPlayerHandler(AddExistingItemToPlayerHandler h) { panicWithTC9Unavailable("TC9SetAddExistingItemToPlayerHandler"); }
+
+// TC9SetStoreNewItemHandler sets handler for creating a template item on a player.
+void TC9SetStoreNewItemHandler(StoreNewItemHandler h) { panicWithTC9Unavailable("TC9SetStoreNewItemHandler"); }
+
+void TC9SetSetItemPermanentEnchantmentHandler(SetItemPermanentEnchantmentHandler h) { panicWithTC9Unavailable("TC9SetSetItemPermanentEnchantmentHandler"); }
 
 // TC9SetGetMoneyForPlayerHandler sets handler for getting money for player request.
 //

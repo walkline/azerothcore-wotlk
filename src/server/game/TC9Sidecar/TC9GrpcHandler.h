@@ -30,7 +30,10 @@ public:
     // Items
     static GetPlayerItemsByGuidsResponse          GetPlayerItemsByGuids(uint64 player, uint64* items, int items_len);
     static RemoveItemsWithGuidsFromPlayerResponse RemoveItemsWithGuidsFromPlayer(uint64 player, uint64* items, int itemsLen, uint64 assignToPlayer);
+    static DestroyItemsWithGuidsFromPlayerResponse DestroyItemsWithGuidsFromPlayer(uint64 player, uint64* items, int itemsLen);
     static PlayerItemErrorCode                    AddExistingItemToPlayer(AddExistingItemToPlayerRequest*);
+    static StoreNewItemResponse                   StoreNewItem(StoreNewItemRequest* request);
+    static SetItemPermanentEnchantmentResponse    SetItemPermanentEnchantment(SetItemPermanentEnchantmentRequest* request);
 
     // Money
     static GetMoneyForPlayerResponse    GetMoneyForPlayer(uint64 player);

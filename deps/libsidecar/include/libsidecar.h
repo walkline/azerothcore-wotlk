@@ -19,7 +19,7 @@
     #endif
 #endif
 
-/* Compile-time version macros (must match the libsidecar you link) */
+/* Compile-time version macros (generated from CMake project VERSION) */
 #include "tc9_version.h"
 
 /* Include all API headers */
@@ -98,6 +98,7 @@ TC9_API void TC9SetOnGroupConvertedToRaidHook(OnGroupConvertedToRaidHook h);
 TC9_API void TC9SetOnGuildMemberAddedHook(OnGuildMemberAddedHook h);
 TC9_API void TC9SetOnGuildMemberRemovedHook(OnGuildMemberRemovedHook h);
 TC9_API void TC9SetOnGuildMemberLeftHook(OnGuildMemberLeftHook h);
+TC9_API void TC9SetOnGuildCreatedHook(OnGuildCreatedHook h);
 
 TC9_API void TC9SetOnMapsReassignedHook(OnMapsReassignedHook h);
 
@@ -114,7 +115,10 @@ TC9_API void TC9SetCanPlayerInteractWithGOAndTypeHandler(CanPlayerInteractWithGO
 
 TC9_API void TC9SetGetPlayerItemsByGuidsHandler(GetPlayerItemsByGuidsHandler h);
 TC9_API void TC9SetRemoveItemsWithGuidsFromPlayerHandler(RemoveItemsWithGuidsFromPlayerHandler h);
+TC9_API void TC9SetDestroyItemsWithGuidsFromPlayerHandler(DestroyItemsWithGuidsFromPlayerHandler h);
 TC9_API void TC9SetAddExistingItemToPlayerHandler(AddExistingItemToPlayerHandler h);
+TC9_API void TC9SetStoreNewItemHandler(StoreNewItemHandler h);
+TC9_API void TC9SetSetItemPermanentEnchantmentHandler(SetItemPermanentEnchantmentHandler h);
 
 TC9_API void TC9SetGetMoneyForPlayerHandler(GetMoneyForPlayerHandler h);
 TC9_API void TC9SetModifyMoneyForPlayerHandler(ModifyMoneyForPlayerHandler h);
