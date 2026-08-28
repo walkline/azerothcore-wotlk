@@ -550,6 +550,9 @@ StoreNewItemResponse ToCloud9GrpcHandler::StoreNewItem(StoreNewItemRequest* requ
     {
         for (int i = 0; i < request->enchantmentIDsSize; ++i)
         {
+            if (i >= MAX_ENCHANTMENT_SLOT)
+                break;
+
             uint32 enchId = request->enchantmentIDs[i];
             if (!enchId)
                 continue;
@@ -586,7 +589,7 @@ SetItemPermanentEnchantmentResponse ToCloud9GrpcHandler::SetItemPermanentEnchant
         return resp;
 
     Item* item = player->GetItemByGuid(ObjectGuid(request->itemGuid));
-    if (!item)
+    if (!item || request->slot >= MAX_ENCHANTMENT_SLOT)
     {
         resp.errorCode = PlayerItemErrorItemNotFound;
         return resp;
