@@ -19,7 +19,7 @@
     #endif
 #endif
 
-/* Compile-time version macros (generated from CMake project VERSION) */
+/* Compile-time version macros (must match the libsidecar you link) */
 #include "tc9_version.h"
 
 /* Include all API headers */

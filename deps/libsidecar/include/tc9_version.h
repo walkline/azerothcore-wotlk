@@ -1,8 +1,10 @@
 #ifndef TC9_VERSION_H
 #define TC9_VERSION_H
 
-/* Generated from CMake project version — do not edit by hand.
- * Bump version only in: project(libsidecar VERSION x.y.z ...) in CMakeLists.txt
+/* Vendored snapshot of libsidecar-cpp generated version header.
+ * Keep in sync with the libsidecar binary in this deps folder.
+ * Upstream source of truth: project(libsidecar VERSION ...) in
+ * game-server/libsidecar-cpp/CMakeLists.txt (generates this file).
  */
 
 #define TC9_VERSION_MAJOR 1
