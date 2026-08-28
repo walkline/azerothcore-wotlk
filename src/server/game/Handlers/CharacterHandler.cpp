@@ -716,12 +716,11 @@ void WorldSession::HandlePlayerLoginOpcode(WorldPacket& recvData)
     // Stock client packets remain guid-only.
     uint32 clusterGuildId = 0;
     uint8 clusterGuildRank = 0;
-    if (sToCloud9Sidecar->ClusterModeEnabled())
+    if (sToCloud9Sidecar->ClusterModeEnabled()
+        && recvData.rpos() + sizeof(uint32) + sizeof(uint8) <= recvData.size())
     {
-        if (recvData.rpos() + sizeof(uint32) <= recvData.size())
-            recvData >> clusterGuildId;
-        if (recvData.rpos() + sizeof(uint8) <= recvData.size())
-            recvData >> clusterGuildRank;
+        recvData >> clusterGuildId;
+        recvData >> clusterGuildRank;
     }
 
     // The ownership check is delegated to the gateway in cluster mode, but a
@@ -814,8 +813,16 @@ void WorldSession::HandlePlayerLoginOpcode(WorldPacket& recvData)
             // Cluster reconnect: re-stamp guild fields from the login packet.
             if (sToCloud9Sidecar->ClusterModeEnabled())
             {
-                p->SetInGuild(clusterGuildId);
-                p->SetRank(clusterGuildRank);
+                if (clusterGuildRank >= GUILD_RANKS_MAX_COUNT)
+                {
+                    LOG_ERROR("network", "Cluster guild stamp for {} ignored: guild {} rank {} (max {})",
+                        p->GetGUID().ToString(), clusterGuildId, uint32(clusterGuildRank), uint32(GUILD_RANKS_MAX_COUNT));
+                }
+                else
+                {
+                    p->SetInGuild(clusterGuildId);
+                    p->SetRank(clusterGuildRank);
+                }
             }
             HandlePlayerLoginToCharInWorld(p);
             return;
@@ -912,8 +919,17 @@ void WorldSession::HandlePlayerLoginFromDB(LoginQueryHolder const& holder)
     {
         // Cluster: guild id/rank come from the gateway on CMSG_PLAYER_LOGIN (via LoginQueryHolder).
         // Do not call SendLoginInfo — MOTD/roster/signed-on are handled by the gateway.
-        pCurrChar->SetInGuild(holder.GetClusterGuildId());
-        pCurrChar->SetRank(holder.GetClusterGuildRank());
+        if (holder.GetClusterGuildRank() >= GUILD_RANKS_MAX_COUNT)
+        {
+            LOG_ERROR("network", "Cluster guild stamp for {} ignored: guild {} rank {} (max {})",
+                pCurrChar->GetGUID().ToString(), holder.GetClusterGuildId(), uint32(holder.GetClusterGuildRank()),
+                uint32(GUILD_RANKS_MAX_COUNT));
+        }
+        else
+        {
+            pCurrChar->SetInGuild(holder.GetClusterGuildId());
+            pCurrChar->SetRank(holder.GetClusterGuildRank());
+        }
     }
 
     data.Initialize(SMSG_LEARNED_DANCE_MOVES, 4 + 4);

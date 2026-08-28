@@ -20,6 +20,7 @@
 #include "BattlegroundMgr.h"
 #include "Guild.h"
 #include "Item.h"
+#include "Log.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "Player.h"
@@ -143,7 +144,11 @@ SetPlayerGuildFieldsResponse ToCloud9GrpcHandler::SetPlayerGuildFields(uint64 pl
         return resp;
 
     if (rank >= GUILD_RANKS_MAX_COUNT)
+    {
+        LOG_ERROR("entities.player", "SetPlayerGuildFields ignored for {}: guild {} rank {} (max {})",
+            player->GetGUID().ToString(), guildId, rank, uint32(GUILD_RANKS_MAX_COUNT));
         return resp;
+    }
 
     // The client gates the guild control UI on these public unit fields; in
     // cluster mode the guild service owns membership, so refresh them on the
