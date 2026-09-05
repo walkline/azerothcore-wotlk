@@ -233,18 +233,16 @@ func TestTrade_StackableMerge(t *testing.T) {
 	// After accept: totals conserved and B gains.
 	bag, slot := a.AddItemWait(t, itemLinenCloth, 5)
 	b.AddItemWait(t, itemLinenCloth, 3)
-	a0 := a.InventoryCount(t, itemLinenCloth)
-	b0 := b.InventoryCount(t, itemLinenCloth)
-	if a0 < 5 || b0 < 3 {
-		e2eharness.Preconditionf(t, "seed failed a=%d b=%d", a0, b0)
-	}
+	// Same oracle as the dual-accept test: client push can land before CharDB.
+	a0 := waitInvAtLeast(t, a, itemLinenCloth, 5, 10*time.Second)
+	b0 := waitInvAtLeast(t, b, itemLinenCloth, 3, 10*time.Second)
 
 	e2eharness.OpenTrade(t, a, b)
 	a.SetTradeItem(t, 0, bag, slot)
 	e2eharness.CompleteTrade(t, a, b)
 
-	a1 := a.InventoryCount(t, itemLinenCloth)
-	b1 := b.InventoryCount(t, itemLinenCloth)
+	a1 := waitInv(t, a, itemLinenCloth, func(n int) bool { return n == a0-5 }, 10*time.Second)
+	b1 := waitInv(t, b, itemLinenCloth, func(n int) bool { return n == b0+5 }, 10*time.Second)
 	if a1+b1 != a0+b0 {
 		e2eharness.Assertf(t, "linen not conserved %d+%d → %d+%d", a0, b0, a1, b1)
 	}

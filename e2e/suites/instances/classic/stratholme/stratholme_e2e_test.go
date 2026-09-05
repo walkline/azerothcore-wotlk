@@ -124,7 +124,16 @@ func TestAC_26363_TimmyEmergesAfterSquareCleared(t *testing.T) {
 
 	// Center of the 15 relevant Scarlet spawns in Crusaders' Square. The 55-yard
 	// observation radius excludes other Scarlet spawns with the same entries.
+	// `.go xyz` into map 329 can land on a leftover instance where Timmy is
+	// already visible from a previous run — reset the grid first.
 	bot.Teleport(t, 3660, -3180, 127, stratholmeMap)
+	bot.CombatReady(t)
+	if leftover := bot.FindUnit(npcTimmyTheCruel, 100); leftover != 0 {
+		t.Logf("dirty instance: Timmy 0x%X already in cache, killing + .respawn", leftover)
+		bot.DamageKill(t, []uint64{leftover}, 10_000_000, 10*time.Second)
+	}
+	bot.GM(t, ".respawn")
+	bot.FlushWorld(t)
 	triggers := waitForTimmyActivationSet(t, bot, 20*time.Second)
 	if len(triggers) != 15 {
 		e2eharness.Preconditionf(t, "loaded Timmy activation area has %d relevant Scarlets, want 15", len(triggers))
