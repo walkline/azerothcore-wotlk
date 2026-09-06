@@ -163,6 +163,11 @@ uint32 ToCloud9Sidecar::GenerateInstanceGuid(uint16 realmId)
     return uint32(TC9GetNextAvailableInstanceGuid(realmId));
 }
 
+uint32 ToCloud9Sidecar::GeneratePetNumber(uint16 realmId)
+{
+    return uint32(TC9GetNextAvailablePetNumber(realmId));
+}
+
 void ToCloud9Sidecar::OnPlayerLeftBattleground(uint64 playerGUID, uint32 realmID, uint32 instanceID)
 {
     TC9PlayerLeftBattleground(playerGUID, realmID, instanceID);

@@ -50,6 +50,7 @@
 #include "Transport.h"
 #include "Unit.h"
 #include "Util.h"
+#include "TC9Sidecar.h"
 #include "Vehicle.h"
 #include "World.h"
 #include <boost/algorithm/string.hpp>
@@ -8148,6 +8149,19 @@ std::string ObjectMgr::GeneratePetName(uint32 entry)
 
 uint32 ObjectMgr::GeneratePetNumber()
 {
+    // In cluster mode every worldserver of the realm shares character_pet, and
+    // the per-process counter below is seeded from the same MAX(id) on each of
+    // them: two worldservers hand out the same pet numbers, and the second
+    // save's REPLACE destroys the first player's pet. Take the number from the
+    // guid service, as character and item guids are (GetClusterGuid).
+    if (sToCloud9Sidecar->ClusterModeEnabled())
+    {
+        if (uint32 petNumber = sToCloud9Sidecar->GeneratePetNumber())
+            return petNumber;
+
+        LOG_ERROR("server", "ObjectMgr::GeneratePetNumber: guid service returned no pet number, falling back to the local counter (collisions possible)");
+    }
+
     std::lock_guard<std::mutex> guard(_hiPetNumberMutex);
     return ++_hiPetNumber;
 }

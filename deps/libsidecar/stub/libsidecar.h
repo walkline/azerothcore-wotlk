@@ -28,6 +28,7 @@ void TC9ProcessEventsHooks();
 uint64_t TC9GetNextAvailableCharacterGuid(int realmID);
 uint64_t TC9GetNextAvailableItemGuid(int realmID);
 uint64_t TC9GetNextAvailableInstanceGuid(int realmID);
+uint64_t TC9GetNextAvailablePetNumber(int realmID);
 
 /* Map loading notification */
 void TC9ReadyToAcceptPlayersFromMaps(uint32_t* maps, int mapsLen);

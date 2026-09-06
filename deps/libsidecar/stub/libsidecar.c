@@ -69,6 +69,9 @@ uint64_t TC9GetNextAvailableItemGuid(int realmID) { panicWithTC9Unavailable("TC9
 // TC9GetNextAvailableInstanceGuid returns next available dungeon/raid instance GUID. Thread unsafe.
 uint64_t TC9GetNextAvailableInstanceGuid(int realmID) { panicWithTC9Unavailable("TC9GetNextAvailableInstanceGuid"); return 0; }
 
+// TC9GetNextAvailablePetNumber returns next available pet number (character_pet.id). Thread safe.
+uint64_t TC9GetNextAvailablePetNumber(int realmID) { panicWithTC9Unavailable("TC9GetNextAvailablePetNumber"); return 0; }
+
 // TC9InitLib inits lib by starting services like grpc and healthcheck.
 // Adds game server to the servers registry that will make this server visible for game load balancer.
 //

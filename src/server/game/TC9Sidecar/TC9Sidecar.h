@@ -52,6 +52,7 @@ public:
     uint32 GenerateCharacterGuid(uint16 realmId = DEFAULT_NON_CROSSREALM_REALM_ID);
     uint32 GenerateItemGuid(uint16 realmId = DEFAULT_NON_CROSSREALM_REALM_ID);
     uint32 GenerateInstanceGuid(uint16 realmId = DEFAULT_NON_CROSSREALM_REALM_ID);
+    uint32 GeneratePetNumber(uint16 realmId = DEFAULT_NON_CROSSREALM_REALM_ID);
 
     void OnPlayerLeftBattleground(uint64 playerGUID, uint32 realmID, uint32 instanceID);
     void OnBattlegroundStatusChanged(uint32 instanceID, uint8 status);
